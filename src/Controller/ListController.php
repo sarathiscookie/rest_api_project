@@ -65,9 +65,13 @@ class ListController extends AbstractFOSRestController
             return $this->view($list, Response::HTTP_CREATED);
         }
 
-        return $this->view(['title' => 'This cannot be null'], Response::HTTP_BAD_REQUEST);
+        return $this->view(['message' => 'Something went wrong'], Response::HTTP_BAD_REQUEST);
     }
 
+    /**
+     * @param integer $id
+     * @return \FOS\RestBundle\View\View
+     */
     public function deleteListsAction(int $id)
     {
         $data = $this->treeListRepository->findOneBy(['id' => $id]);
@@ -78,9 +82,44 @@ class ListController extends AbstractFOSRestController
         return $this->view(null, Response::HTTP_NO_CONTENT); 
     }
 
-    public function putListsAction()
+    /**
+     * @Rest\RequestParam(name="title", description="Title of the list", nullable=true)
+     * @param ParamFetcher $paramFetcher
+     * @param integer $id
+     * @return \FOS\RestBundle\View\View
+     */
+    public function putListsAction(ParamFetcher $paramFetcher, int $id)
     {
-        //
+        $errors = [];
+
+        $data = $this->treeListRepository->findOneBy(['id' => $id]);
+
+        $title = $paramFetcher->get('title');
+
+        if($data) {
+            if ( !empty($title) ) {
+
+                $data->setTitle($title);
+    
+                $this->entityManager->persist($data);
+                $this->entityManager->flush();
+    
+                return $this->view(null, Response::HTTP_NO_CONTENT);
+    
+            }
+            else {
+                $errors[] = [
+                    'title' => 'This title value cannot be empty'
+                ];
+            }
+        }
+        else {
+            $errors[] = [
+                'title' => 'Whoops! Data not found.'
+            ];
+        }
+
+        return $this->view($errors, Response::HTTP_NO_CONTENT);
     }
 
     public function getListsTasksAction(int $id)
