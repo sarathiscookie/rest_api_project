@@ -6,6 +6,7 @@ use App\Entity\TreeList;
 use App\Repository\TreeListRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Request\ParamFetcher;
 use FOS\RestBundle\Controller\Annotations as Rest;
@@ -47,22 +48,22 @@ class ListController extends AbstractFOSRestController
 
     /**
      * @Rest\RequestParam(name="title", description="Title of the list", nullable=true)
-     * @param ParamFetcher $paramFetcher
+     * @param Request $request
      * @return \FOS\RestBundle\View\View
      */
-    public function postListsAction(ParamFetcher $paramFetcher)
+    public function postListsAction(Request $request)
     {
-        $title = $paramFetcher->get('title');
+        $data = json_decode($request->getContent(), true);
 
-        if ($title) {
+        if ($data) {
             $list = new TreeList();
 
-            $list->setTitle($title);
+            $list->setTitle($data['title']);
 
             $this->entityManager->persist($list);
             $this->entityManager->flush();
 
-            return $this->view($list, Response::HTTP_CREATED);
+            return $this->view(['message' => 'Well done! Title created successfully.'], Response::HTTP_CREATED);
         }
 
         return $this->view(['message' => 'Something went wrong'], Response::HTTP_BAD_REQUEST);
